@@ -15,61 +15,94 @@ class App(tk.Tk):
         self.geometry("1200x800")
         self.current_image = None
         self.image_history = deque(maxlen=10)
-        self.paint_mode = False
-        self.color = (0, 0, 0)
         self.image_scale = 1
 
         self.create_gui_elements()
 
-        paint_cursor = Cursor(self, self.image_label)
+        self.brush = Cursor(self, self.image_label)
 
 
     def create_gui_elements(self):
         """
         Create the GUI elements for the application.
         """
-        top_frame = tk.Frame(self, bg='lightgray')
-        top_frame.pack(side=tk.TOP, fill=tk.X)
+        self.edit_frame = tk.Frame(self, bg='lightgray')
+        self.edit_frame.pack(side=tk.TOP, fill=tk.X)
 
-        self.load_image_button = tk.Button(top_frame, text="Load Image", command=self.open_image)
+        self.fill_edit_frame()
+
+        self.image_label = tk.Label(self)
+        self.image_label.pack(side=tk.LEFT, padx=5, pady=5)        
+
+    def fill_edit_frame(self):
+        """
+        fill the edit frame with edit mode buttons
+        """
+        self.load_image_button = tk.Button(self.edit_frame, text="Load Image", command=self.open_image)
         self.load_image_button.pack(side=tk.LEFT, padx=5, pady=5)
 
-        self.blur_image_button = tk.Button(top_frame, text="Blur Image", command=self.blur_image)
+        self.blur_image_button = tk.Button(self.edit_frame, text="Blur Image", command=self.blur_image)
         self.blur_image_button.pack(side=tk.LEFT, padx=5, pady=5)
 
-        self.blur_scale = tk.Scale(top_frame, from_=0, to=10, orient=tk.HORIZONTAL)
+        self.blur_scale = tk.Scale(self.edit_frame, from_=0, to=10, orient=tk.HORIZONTAL)
         self.blur_scale.pack(side=tk.LEFT, padx=5, pady=5)
 
-        self.grayscale_image_button = tk.Button(top_frame, text="Grayscale Image", command=self.grayscale_image)
+        self.grayscale_image_button = tk.Button(self.edit_frame, text="Grayscale Image", command=self.grayscale_image)
         self.grayscale_image_button.pack(side=tk.LEFT, padx=5, pady=5)
 
-        self.brightness_scale_button = tk.Button(top_frame, text="Brightness", command=self.brightness_image)
+        self.brightness_scale_button = tk.Button(self.edit_frame, text="Brightness", command=self.brightness_image)
         self.brightness_scale_button.pack(side=tk.LEFT, padx=5, pady=5)
 
-        self.brightness_scale = tk.Scale(top_frame, from_=0, to=20, orient=tk.HORIZONTAL)
+        self.brightness_scale = tk.Scale(self.edit_frame, from_=0, to=20, orient=tk.HORIZONTAL)
         self.brightness_scale.set(10)
         self.brightness_scale.pack(side=tk.LEFT, padx=5, pady=5)
 
-        self.derivative_image_button = tk.Button(top_frame, text="Derivative", command=self.derivative_image)
+        self.derivative_image_button = tk.Button(self.edit_frame, text="Derivative", command=self.derivative_image)
         self.derivative_image_button.pack(side=tk.LEFT, padx=5, pady=5)
 
-        self.cursor_button = tk.Button(top_frame, text="Paint", command=self.paint_image)
-        self.cursor_button.pack(side=tk.LEFT, padx=5, pady=5)
+        self.revert_image_button = tk.Button(self.edit_frame, text="Revert", command=self.revert_image)
+        self.revert_image_button.pack(side=tk.RIGHT, padx=5, pady=5)
+        
+        self.paint_mode = tk.Button(self.edit_frame, text="Paint", command=self.switch_paint_mode)
+        self.paint_mode.pack(side=tk.RIGHT, padx=5, pady=5)
 
-        self.color_picker = tk.Button(top_frame, text="Color", command=self.change_color)
+
+    def fill_paint_frame(self):
+        """
+        fill the edit frame with paint mode buttons
+        """
+        self.load_image_button = tk.Button(self.edit_frame, text="Load Image", command=self.open_image)
+        self.load_image_button.pack(side=tk.LEFT, padx=5, pady=5)
+
+        self.color_picker = tk.Button(self.edit_frame, text="Color", command=self.change_color)
         self.color_picker.pack(side=tk.LEFT, padx=5, pady=5)
 
-        self.opacity_scale = tk.Scale(top_frame, from_=100, to=0, orient=tk.VERTICAL)
-        self.opacity_scale.set(100)
-        self.opacity_scale.pack(side=tk.LEFT, padx=5, pady=5)
-        self.opacity_label = tk.Label(top_frame, text="Opacity")
+        self.opacity_label = tk.Label(self.edit_frame, text="Opacity", background='lightgray')
         self.opacity_label.pack(side=tk.LEFT, padx=5, pady=5)
 
-        self.revert_image_button = tk.Button(top_frame, text="Revert", command=self.revert_image)
+        self.opacity_scale = tk.Scale(self.edit_frame, from_=100, to=0, orient=tk.HORIZONTAL)
+        self.opacity_scale.set(100)
+        self.opacity_scale.pack(side=tk.LEFT, padx=5, pady=5)
+
+        self.brush_size_label = tk.Label(self.edit_frame, text="Size", background='lightgray')
+        self.brush_size_label.pack(side=tk.LEFT, padx=5, pady=5)
+
+        self.brush_size = tk.Scale(self.edit_frame, from_=0, to=100, orient=tk.HORIZONTAL, command=self.brush.change_size)
+        self.brush_size.set(10)
+        self.brush_size.pack(side=tk.LEFT, padx=5, pady=5)
+
+        self.revert_image_button = tk.Button(self.edit_frame, text="Revert", command=self.revert_image)
         self.revert_image_button.pack(side=tk.RIGHT, padx=5, pady=5)
 
-        self.image_label = tk.Label(self)
-        self.image_label.pack(side=tk.LEFT, padx=5, pady=5)
+        self.exit_paint_mode = tk.Button(self.edit_frame, text="Exit Paint Mode", command=self.switch_paint_mode)
+        self.exit_paint_mode.pack(side=tk.RIGHT, padx=5, pady=5)
+
+
+    def replace_frame(self, new_frame):
+        for widget in self.edit_frame.winfo_children():
+            widget.destroy()
+        
+        new_frame()
 
     def resize_image(self, image):
         """
@@ -145,9 +178,10 @@ class App(tk.Tk):
         Open a file dialog to select an image file and display it.
         """
         file_path = filedialog.askopenfilename()
-        image = Image.open(file_path)
-        self.current_image = image.convert("RGB")
-        self.refresh_image(self.current_image)
+        if file_path:
+            image = Image.open(file_path)
+            self.current_image = image.convert("RGB")
+            self.refresh_image(self.current_image)
 
     def derivative_image(self):
         """
@@ -156,21 +190,25 @@ class App(tk.Tk):
         new_image = horizontal_derivative(self.current_image)
         self.refresh_image(new_image)
 
-    def paint_image(self):
+    def switch_paint_mode(self):
         """
-        Enable painting on the current image.
+        Switch between paint mode and edit mode.
         """
-        if self.paint_mode:
-            self.paint_mode = False
-            self.cursor_button.config(text="Paint")
+        if self.brush.Active:
+            self.replace_frame(self.fill_edit_frame)
+            self.brush.Switch_Active()
 
         else:
-            self.paint_mode = True
-            self.cursor_button.config(text="Stop Painting")
+            self.replace_frame(self.fill_paint_frame)
+            self.brush.Switch_Active()
+
 
     def change_color(self):
         """
         Change the color of the paint cursor.
         """
-        self.color = colorchooser.askcolor(title="Choose color")
+        color = colorchooser.askcolor(title="Choose color")
+        if color:
+            self.brush.color = color[0]
+            self.color_picker.config(background=color[1])
 

@@ -1,5 +1,6 @@
 import numpy as np
 from PIL import Image
+from scipy.ndimage import convolve
 
 def grayscale_image(image, return_array=False):
     """
@@ -44,6 +45,32 @@ def horizontal_derivative(image):
     for image_row in range(image_array.shape[0]):
         for image_col in range( 1 , image_array.shape[1] - 1):
             region = image_array[image_row, image_col - 1 : image_col + 2]
+
+            convolved_value = np.sum(region * matrix)
+
+            result_image[image_row, image_col] = convolved_value
+
+    return image_to_rb(result_image)
+
+def vertical_derivative(image):
+    """
+    Apply a vertical derivative to an image.
+    
+    Args:
+        image_array (PIL.Image.Image): The input image.
+        
+    Returns:
+        PIL.Image.Image: The image with a vertical derivative applied.
+    """
+    matrix = np.array([[-1], [0], [1]])
+
+    image_array = grayscale_image(image, return_array=True)
+
+    result_image = np.zeros_like(image_array.astype(np.int16))
+
+    for image_row in range(1, image_array.shape[0] - 1):
+        for image_col in range(image_array.shape[1]):
+            region = image_array[image_row - 1 : image_row + 2, image_col].reshape(3, 1)
 
             convolved_value = np.sum(region * matrix)
 
@@ -97,7 +124,7 @@ def guassian_blur(blur_amount):
             blur_matrix[i, j] = 2 ** (x + y)  
     return blur_matrix
             
-def matrix_multiply(image, matrix):
+def matrix_multiply(image, matrix, correct_matrix=True):
     """
     Apply matrix multiplication to an image.
     
@@ -131,9 +158,10 @@ def matrix_multiply(image, matrix):
                         y = image_col + half_matrix + 1 - image_array.shape[1]
                         new_matrix = new_matrix[:, :-y]  
 
-                correct_matrix = new_matrix / np.sum(new_matrix)
+                if correct_matrix:
+                    new_matrix = new_matrix / np.sum(new_matrix)
 
-                convolved_value = np.sum(region * correct_matrix)
+                convolved_value = np.sum(region * new_matrix)
                 result_image[image_row, image_col, color] = convolved_value
     return result_image
 
@@ -156,3 +184,38 @@ def brightness_image(image, brightness_amount):
     corected_image = np.clip( image_array * brightness_amount, 0, 255)
 
     return Image.fromarray(corected_image.astype('uint8'))
+
+def sobel_derivative(image):
+    """
+    Apply a Sobel filter to an image.
+    
+    Args:
+        image (PIL.Image.Image): The input image.
+        
+    Returns:
+        PIL.Image.Image: The Sobel-filtered image.
+    """
+    if image.mode != 'L':
+        image = image.convert('L')
+    
+    image_array = np.array(image)
+    
+    horizontal_kernel = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
+    vertical_kernel = np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
+
+    gradient_magnitude = np.zeros_like(image_array)
+    
+    padded_image = np.pad(image_array, 1, mode='edge')
+    
+    for i in range(1, padded_image.shape[0] - 1):
+        for j in range(1, padded_image.shape[1] - 1):
+            region = padded_image[i-1:i+2, j-1:j+2]
+            horizontal_response = np.sum(horizontal_kernel * region)
+            vertical_response = np.sum(vertical_kernel * region)
+            gradient_magnitude[i-1, j-1] = np.sqrt(horizontal_response**2 + vertical_response**2)
+    
+    gradient_magnitude = (gradient_magnitude / gradient_magnitude.max()) * 255
+    
+    result_image = gradient_magnitude.astype(np.uint8)
+    
+    return Image.fromarray(result_image)

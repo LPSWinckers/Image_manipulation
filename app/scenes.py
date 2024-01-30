@@ -4,7 +4,7 @@ import tkinter.ttk as ttk
 from PIL import Image, ImageTk
 from collections import deque
 
-from .imageFilters import blur_image, grayscale_image, brightness_image, horizontal_derivative
+from .imageFilters import blur_image, grayscale_image, brightness_image, horizontal_derivative, vertical_derivative, sobel_derivative
 from .imageCursor import Cursor
 
 class App(tk.Tk):
@@ -57,7 +57,13 @@ class App(tk.Tk):
         self.brightness_scale.set(10)
         self.brightness_scale.pack(side=tk.LEFT, padx=5, pady=5)
 
-        self.derivative_image_button = tk.Button(self.edit_frame, text="Derivative", command=self.derivative_image)
+        derivative_options = ["Horizontal", "Vertical", "Sobel"]
+
+        self.derivative_option = ttk.Combobox(self.edit_frame, values=derivative_options, state="readonly")
+        self.derivative_option.current(0)
+        self.derivative_option.pack(side=tk.LEFT, padx=5, pady=5)
+
+        self.derivative_image_button = tk.Button(self.edit_frame, text="Apply Derivative", command=self.derivative_image)
         self.derivative_image_button.pack(side=tk.LEFT, padx=5, pady=5)
 
         self.revert_image_button = tk.Button(self.edit_frame, text="Revert", command=self.revert_image)
@@ -187,7 +193,13 @@ class App(tk.Tk):
         """
         Apply a horizontal derivative to the current image.
         """
-        new_image = horizontal_derivative(self.current_image)
+        if self.derivative_option.get() == "Horizontal":
+            new_image = horizontal_derivative(self.current_image)
+        elif self.derivative_option.get() == "Vertical":
+            new_image = vertical_derivative(self.current_image)
+        else:
+            new_image = sobel_derivative(self.current_image)
+
         self.refresh_image(new_image)
 
     def switch_paint_mode(self):

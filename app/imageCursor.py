@@ -14,7 +14,7 @@ class Cursor:
         self.Active = Active
         
         self.color = [0, 0, 0]
-        brush_size = 10
+        self.brush_size = 10
 
         self.image_label = image_label
         self.image_label.bind("<Button-1>", self.on_click)
@@ -54,7 +54,7 @@ class Cursor:
 
         distance = np.sqrt((x - center_x)**2 + (y - center_y)**2)
 
-        mask = distance <= self.brush_size()
+        mask = distance <= int(self.brush_size)
 
         image_array[mask] = self.color 
 

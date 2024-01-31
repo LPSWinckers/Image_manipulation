@@ -10,7 +10,7 @@ This repository is a personal proof of concept for learning image processing in 
 
 ## Installation
 Clone the repository to your local machine:
-git clone [https://github.com/yourusername/your-repository-name.git](https://github.com/LPSWinckers/Image_manipulation)
+git clone [https://github.com/LPSWinckers/Image_manipulation.git](https://github.com/LPSWinckers/Image_manipulation)
 Navigate to the cloned directory:
 cd your-repository-name
 Install the required packages:
